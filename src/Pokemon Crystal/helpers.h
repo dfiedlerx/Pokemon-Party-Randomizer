@@ -8,3 +8,4 @@ extern std::vector<DWORD> gAddresses;
 extern std::map<unsigned char, sMove> gMoves;
 extern std::map<unsigned char, sPokemon> gPokemons;
 extern DWORD gCorrectAddr;
+

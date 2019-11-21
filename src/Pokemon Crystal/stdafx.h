@@ -13,5 +13,13 @@
 
 #pragma comment( lib, "Ws2_32.lib")
 
+// Cleanup
+extern struct sPokemon;
+int minExpForLevel(char level, sPokemon pokemon);
+/// End Cleanup
+
 #include "datatypes.h"
 #include "helpers.h"
+
+#include "PartyPokemon.h"
+

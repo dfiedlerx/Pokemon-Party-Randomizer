@@ -7,6 +7,8 @@
 
 #define MAX_POKEMON_DATA_SIZE 0x30
 
+#define MAX_MOVES 4
+
 #define SPIECES 0
 
 #define EXPERIENCE 8
@@ -39,28 +41,6 @@
 #define CUR_SATK 44
 #define CUR_SDEF 46
 
-
-struct sDV
-
-{
-	union
-	{
-		struct
-		{
-			unsigned char defense : 4;
-			unsigned char attack : 4;
-			unsigned char special : 4;
-			unsigned char speed : 4;
-		};
-
-		unsigned short DVs;
-	};
-
-	char getHP()
-	{
-		return (char)(attack&1 == 1 ? 8 : 0) + (defense&1 == 1 ? 4 : 0) + (speed&1 == 1 ? 2 : 0) + (special&1 == 1 ? 1 : 0);
-	}
-};
 
 struct sMinMove
 {
@@ -132,5 +112,26 @@ public:
 		}
 
 		return moves;
+	}
+};
+
+
+struct sDV {
+	union
+	{
+		struct
+		{
+			unsigned char defense : 4;
+			unsigned char attack : 4;
+			unsigned char special : 4;
+			unsigned char speed : 4;
+		};
+
+		unsigned short DVs;
+	};
+
+	char getHP()
+	{
+		return (char)((attack & 1) == 1 ? 8 : 0) + ((defense&1) == 1 ? 4 : 0) + ((speed&1) == 1 ? 2 : 0) + ((special&1) == 1 ? 1 : 0);
 	}
 };

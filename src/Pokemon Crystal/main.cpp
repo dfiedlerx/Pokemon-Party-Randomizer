@@ -121,8 +121,8 @@ void loadPokemons()
 		std::stringstream stream1(pokemon.moves);
 		std::stringstream stream2(pokemon.levels);
 		while(getline(stream1, move, ',') && getline(stream2, level, ',')) {
-			unsigned short moveId = atoi(move.c_str());
-			unsigned short minLevel = atoi(level.c_str());
+			unsigned char moveId = atoi(move.c_str());
+			unsigned char minLevel = atoi(level.c_str());
 
 			sMinMove minMove = {moveId, minLevel};
 
@@ -139,19 +139,21 @@ void loadPokemons()
 
 int minExpForLevel(char level, sPokemon pokemon)
 {
+	double experience = 0;
+
 	switch(pokemon.experience)
 	{
 	case 800000:
-		return floor(level * level * level * 0.8);
+		experience = floor(level * level * level * 0.8);
 	case 1000000:
-		return floor(level * level * level);
+		experience = floor(level * level * level);
 	case 1059860:
-		return floor(1.2 * level * level * level - 15 * level * level + 100 * level - 140);
+		experience = floor(1.2 * level * level * level - 15 * level * level + 100 * level - 140);
 	case 1250000:
-		return floor(level * level * level * 1.25);
+		experience = floor(level * level * level * 1.25);
 	}
 
-	return 0;
+	return static_cast<int>(experience);
 }
 
 bool randomizeParty(DWORD addr)
@@ -169,37 +171,26 @@ bool randomizeParty(DWORD addr)
 	}
 	
 	unsigned char previousPokemonIndex;
-	unsigned char level = 0;
-	unsigned long  experience = 0;
-	unsigned short hpExp = 0;
-	unsigned short atkExp = 0;
-	unsigned short defExp = 0;
-	unsigned short spdExp = 0;
-	unsigned short spcExp = 0;
+	unsigned long experience = 0;
+
 
 	unsigned short prevMaxHP = 0;
-	unsigned short curHP = 0;
 	unsigned short newMaxHP = 0;
-	unsigned short newAtk = 0;
-	unsigned short newDef = 0;
-	unsigned short newSAtk = 0;
-	unsigned short newSDef = 0;
-	unsigned short newSpd = 0;
 
-	sDV DV = sDV();
 	unsigned char pokId = 1 + rand() % 251; 
-
-	sPokemon pokemon;
-	sPokemon prevPokemon;
 
 	for (int i = 0; i < pokemonAmount; i++) {
 		pokId = 1 + rand() % 251; 
 
 
 		DWORD spiecesAddr = addr + OFFSET_SPIECES + (i);
-		DWORD partyAddr = addr + OFFSET_PARTY + (i * MAX_POKEMON_DATA_SIZE);
+		DWORD partyAddr = addr + OFFSET_PARTY + (MAX_POKEMON_DATA_SIZE * i);
 		DWORD seenAddr = addr + OFFSET_POKEDEX_SEEN;
 		DWORD caughtAddr = addr + OFFSET_POKEDEX_CAUGHT;
+
+		PartyPokemon partyPokemon = PartyPokemon();
+ 		ReadProcessMemory(process, (void*)(partyAddr), &partyPokemon.ramData, MAX_POKEMON_DATA_SIZE, &loaded);
+		partyPokemon.swapEndians();
 	
  		ReadProcessMemory(process, (void*)(spiecesAddr), &previousPokemonIndex, 1, &loaded);
 
@@ -208,147 +199,41 @@ bool randomizeParty(DWORD addr)
 			continue;
 		}
 		
-		ReadProcessMemory(process, (void*)(partyAddr + LEVEL), &level, 1, &loaded);
+		partyPokemon.pokemon = gPokemons.at(pokId);
+		partyPokemon.previousPokemon = gPokemons.at(previousPokemonIndex);
 
-		pokemon = gPokemons.at(pokId);
-		prevPokemon = gPokemons.at(previousPokemonIndex);
+		partyPokemon.index = partyPokemon.pokemon.index;
+		partyPokemon.recalculate();
 
-		// Stats
-		{
-			ReadProcessMemory(process, (void*)(partyAddr + DVS), &DV.DVs, sizeof(DV.DVs), &loaded);
-			
-			ReadProcessMemory(process, (void*)(partyAddr + HP_EXP), &hpExp, sizeof(short), &loaded);
-			ReadProcessMemory(process, (void*)(partyAddr + ATK_EXP), &atkExp, sizeof(short), &loaded);
-			ReadProcessMemory(process, (void*)(partyAddr + DEF_EXP), &defExp, sizeof(short), &loaded);
-			ReadProcessMemory(process, (void*)(partyAddr + SPD_EXP), &spdExp, sizeof(short), &loaded);
-			ReadProcessMemory(process, (void*)(partyAddr + SPC_EXP), &spcExp, sizeof(short), &loaded);
-			ReadProcessMemory(process, (void*)(partyAddr + CUR_HP), &curHP, sizeof(short), &loaded);
-
-			
-			curHP = htons(curHP);
-			hpExp = htons(hpExp);
-			atkExp = htons(atkExp);
-			defExp = htons(defExp);
-			spdExp = htons(spdExp);
-			spcExp = htons(spcExp);
-
-			if (hpExp < 1) {
-				hpExp = 1;
-			}
-
-			if (atkExp < 1) {
-				atkExp = 1;
-			}
-
-			if (defExp < 1) {
-				defExp = 1;
-			}
-
-			if (spdExp < 1) {
-				spdExp = 1;
-			}
-
-			if (spcExp < 1) {
-				spcExp = 1;
-			}
-			
-			prevMaxHP = floor(((prevPokemon.hitPoints+DV.getHP())*2+floor((sqrt(hpExp - 1) + 1) / 4))*level/100) + 10 + level;
-			newMaxHP = floor(((pokemon.hitPoints+DV.getHP())*2+floor((sqrt(hpExp - 1) + 1) / 4))*level/100) + 10 + level;
-			newAtk = htons(floor(((pokemon.attack+DV.attack)*2+floor((sqrt(atkExp - 1) + 1) / 4))*level/100) + 5);
-			newDef = htons(floor(((pokemon.defense+DV.defense)*2+floor((sqrt(defExp - 1) + 1) / 4))*level/100) + 5);
-			newSAtk = htons(floor(((pokemon.specialAttack+DV.special)*2+floor((sqrt(spcExp - 1) + 1) / 4))*level/100) + 5);
-			newSDef = htons(floor(((pokemon.specialDefense+DV.special)*2+floor((sqrt(spcExp - 1) + 1) / 4))*level/100) + 5);
-			newSpd = htons(floor(((pokemon.speed+DV.speed)*2+floor((sqrt(spdExp - 1) + 1) / 4))*level/100)  + 5);
-			
-			if(prevMaxHP != newMaxHP && curHP > 1)
-			{
-				int hpPct = curHP * 100 / prevMaxHP;
-				curHP = ceil(newMaxHP * hpPct / 100);
-
-				if(curHP > newMaxHP) {
-					curHP = newMaxHP;
-				}
-
-				if(curHP < 1) {
-					curHP = 1;
-				}
-			}
-
-			newMaxHP = htons(newMaxHP);
-			curHP = htons(curHP);
-			
-			WriteProcessMemory(process, (void*)(partyAddr + CUR_HP), &curHP, sizeof(short), &loaded);
-			WriteProcessMemory(process, (void*)(partyAddr + MAX_HP), &newMaxHP, sizeof(short), &loaded);
-			WriteProcessMemory(process, (void*)(partyAddr + CUR_ATK), &newAtk, sizeof(short), &loaded);
-			WriteProcessMemory(process, (void*)(partyAddr + CUR_DEF), &newDef, sizeof(short), &loaded);
-			WriteProcessMemory(process, (void*)(partyAddr + CUR_SATK), &newSAtk, sizeof(short), &loaded);
-			WriteProcessMemory(process, (void*)(partyAddr + CUR_SDEF), &newSDef, sizeof(short), &loaded);
-			WriteProcessMemory(process, (void*)(partyAddr + CUR_SPD), &newSpd, sizeof(short), &loaded);
-		}
 
 		// Moves
 		{
-			unsigned char* moves = pokemon.getMovesForLevel(level);
+			unsigned char* moves = partyPokemon.pokemon.getMovesForLevel(partyPokemon.level);
 			
 			sMove move1 = gMoves.at(moves[0]);
 			sMove move2 = gMoves.at(moves[1]);
 			sMove move3 = gMoves.at(moves[2]);
 			sMove move4 = gMoves.at(moves[3]);
-			
-			WriteProcessMemory(process, (void*)(partyAddr + MOVE_1), &move1.index, sizeof(char), &loaded);
-			WriteProcessMemory(process, (void*)(partyAddr + MOVE_2), &move2.index, sizeof(char), &loaded);
-			WriteProcessMemory(process, (void*)(partyAddr + MOVE_3), &move3.index, sizeof(char), &loaded);
-			WriteProcessMemory(process, (void*)(partyAddr + MOVE_4), &move4.index, sizeof(char), &loaded);
 
-			WriteProcessMemory(process, (void*)(partyAddr + MOVE_1_PP), &move1.maxPP, sizeof(char), &loaded);
-			WriteProcessMemory(process, (void*)(partyAddr + MOVE_2_PP), &move2.maxPP, sizeof(char), &loaded);
-			WriteProcessMemory(process, (void*)(partyAddr + MOVE_3_PP), &move3.maxPP, sizeof(char), &loaded);
-			WriteProcessMemory(process, (void*)(partyAddr + MOVE_4_PP), &move4.maxPP, sizeof(char), &loaded);
+			for (int move = 0; move < MAX_MOVES; move++)
+			{
+				sMove tempMove = gMoves.at(moves[move]);
+
+				partyPokemon.moves[move] = tempMove.index;
+				partyPokemon.movesPP[move] = tempMove.maxPP;
+			}
 		}
 
-		// Fix Exp
 		{
-			experience = 0;
-			ReadProcessMemory(process, (void*)(partyAddr + EXPERIENCE), &experience, 3, &loaded);
-			experience = htonl(experience << 8);
-
-			if (level < 100) {
-				if (prevPokemon.experience != pokemon.experience) {
-					int prevBaseExp = minExpForLevel(level, prevPokemon);
-					int prevNextExp = minExpForLevel(level + 1, prevPokemon);
-					prevNextExp -= prevBaseExp;
-					experience -= prevBaseExp;
-					int experiencePct = experience * 100 / prevNextExp;
-
-					
-					int baseExp = minExpForLevel(level, pokemon);
-					int nextExp = minExpForLevel(level + 1, pokemon);
-					int reqExp = nextExp - baseExp;
-
-					experience = baseExp + floor(experiencePct * reqExp / 100);
-				}
-			} else {
-				experience = pokemon.experience;
-			}
-			
-			if (level < 100 && experience > minExpForLevel(level + 1, pokemon)) {
-				experience = minExpForLevel(level + 1, pokemon) - 1;
-			}
-
-			if (experience > pokemon.experience) {
-				experience = pokemon.experience;
-			}
-
-			
-			experience = htonl(experience) >> 8;
-			
- 			WriteProcessMemory(process, (void*)(partyAddr + EXPERIENCE), &experience, 3, &loaded);
+			partyPokemon.swapEndians();
+			WriteProcessMemory(process, (void*)(spiecesAddr), &partyPokemon.pokemon.index, 1, &loaded);
+			WriteProcessMemory(process, (void*)(partyAddr), &partyPokemon.ramData, MAX_POKEMON_DATA_SIZE, &loaded);
 		}
 
 		{
 			// Pokedex
-			int byteOffset = floor((pokemon.index - 1) / 8);
-			int bitOffset = (pokemon.index - 1) % 8;
+			int byteOffset = floor((partyPokemon.index - 1) / 8);
+			int bitOffset = (partyPokemon.index - 1) % 8;
 
 			unsigned char seen = 0;
 			unsigned char caught = 0;
@@ -361,11 +246,6 @@ bool randomizeParty(DWORD addr)
 
 			WriteProcessMemory(process, (void*)(seenAddr + byteOffset), &seen, 1, &loaded);
 			WriteProcessMemory(process, (void*)(caughtAddr + byteOffset), &caught, 1, &loaded);
-		}
-
-		{
-			WriteProcessMemory(process, (void*)(spiecesAddr), &pokemon.index, 1, &loaded);
-			WriteProcessMemory(process, (void*)(partyAddr + SPIECES), &pokemon.index, 1, &loaded);
 		}
 	}
 
@@ -384,14 +264,16 @@ int main()
 		return 0;
 	}
 
-	srand(time(0));
+	int tempTime = static_cast<unsigned int>(time(0));
+	srand(tempTime);
+
     char someData[] = "ANT  ";
 	someData[3] = 0x50;
 	someData[4] = 0x50;
 	someData[5] = 0x50;
 	size_t size = sizeof(someData);
 	size -= 3;
-	for(int i = 0; i < size; i++) {
+	for(size_t i = 0; i < size; i++) {
 		someData[i] += 0x3F;
 	}
 	size += 3;

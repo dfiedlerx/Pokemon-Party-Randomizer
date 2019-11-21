@@ -82,10 +82,12 @@
   <ItemGroup>
     <ClCompile Include="helpers.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="PartyPokemon.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="datatypes.h" />
     <ClInclude Include="helpers.h" />
+    <ClInclude Include="PartyPokemon.h" />
     <ClInclude Include="stdafx.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
