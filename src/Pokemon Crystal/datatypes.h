@@ -1,4 +1,4 @@
-#include <string>
+#pragma once
 
 #define OFFSET_SPIECES 0x01
 #define OFFSET_PARTY 0x08
