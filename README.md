@@ -1,4 +1,9 @@
-Instructions by Vetyst:
+## Binaries
+https://mega.nz/#!6kknUCKb!_QWFuliWv_0qqfED2H73wQX83AoCm6P9zw_IwLOVvOE
+You'll have to get your own ROM in order to play it.
+The emulator and hack are provided.
+
+## Instructions
 * Get your own Pokemon Crystal ROM.
 * Start VisualBoyAdvance.exe
 * Open the Pokemon Crystal.
