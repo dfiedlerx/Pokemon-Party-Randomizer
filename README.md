@@ -14,11 +14,11 @@ You might have to reboot your PC after installing these redistrubutables.
 ## Instructions
 * Get your own Pokemon Crystal ROM.
 * Start VisualBoyAdvance.exe
-* Open the Pokemon Crystal.
+* Open the Pokemon Crystal ROM.
 * Name your character strictly `ANT`
 * Get your first pokemon
 * Start the application `PartyRandomizr Crystal.exe`
-* You have to restart the application everytime you reload your save/state.
+* You have to restart the application everytime you reload your save, states work.
 
 Once you have a pokemon party you can start the application once your save has been loaded.
 
