@@ -1,3 +1,6 @@
+# WINDOWS ONLY
+This works for windows 7 and above and Linux instalations with Wine only.
+
 ## Binaries
 https://mega.nz/#!6kknUCKb!_QWFuliWv_0qqfED2H73wQX83AoCm6P9zw_IwLOVvOE
 You'll have to get your own ROM in order to play it.
